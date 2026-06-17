@@ -1,0 +1,300 @@
+/* ==========================================================================
+   Immersive reading experience — progress tracking, annotations, drawing.
+   Layers on top of Material for MkDocs using its CSS custom properties so it
+   adapts to both light and dark palettes automatically.
+   ========================================================================== */
+
+:root {
+  --imm-accent: #ee4c2c;            /* PyTorch orange */
+  --imm-hl-yellow: rgba(255, 214, 71, 0.45);
+  --imm-hl-green:  rgba(95, 220, 140, 0.40);
+  --imm-hl-blue:   rgba(96, 175, 255, 0.40);
+  --imm-hl-pink:   rgba(255, 122, 190, 0.40);
+  --imm-hl-purple: rgba(180, 130, 255, 0.42);
+  --imm-panel-radius: 14px;
+}
+
+/* --------------------------------------------------------------------------
+   1. Translucent borders between notebook cells
+   mkdocs-jupyter wraps content in .jupyter-wrapper with .jp-Cell blocks.
+   -------------------------------------------------------------------------- */
+.jupyter-wrapper .jp-Cell {
+  border: 1px solid color-mix(in srgb, var(--md-default-fg-color) 12%, transparent);
+  border-radius: 10px;
+  padding: 0.35rem 0.75rem;
+  margin: 0.55rem 0;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.jupyter-wrapper .jp-Cell:hover {
+  border-color: color-mix(in srgb, var(--imm-accent) 35%, transparent);
+  box-shadow: 0 1px 10px color-mix(in srgb, var(--md-default-fg-color) 8%, transparent);
+}
+.jupyter-wrapper .jp-CodeCell {
+  background: color-mix(in srgb, var(--md-default-fg-color) 3%, transparent);
+}
+
+/* --------------------------------------------------------------------------
+   2. Top-bar gamified progress
+   -------------------------------------------------------------------------- */
+.imm-progress-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0.6rem;
+  padding: 0.18rem 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 999px;
+  color: #fff;
+  background: color-mix(in srgb, var(--imm-accent) 85%, transparent);
+  white-space: nowrap;
+  cursor: default;
+}
+.imm-progress-pill .imm-trophy { font-size: 0.85rem; line-height: 1; }
+
+.imm-progress-bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  width: 0%;
+  background: linear-gradient(90deg, var(--imm-accent), #ffb347);
+  z-index: 1000;
+  transition: width 0.45s cubic-bezier(.2,.8,.2,1);
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   3. Mark-as-complete banner (injected at end of article)
+   -------------------------------------------------------------------------- */
+.imm-complete-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 2.5rem 0 1rem;
+  padding: 0.9rem 1.1rem;
+  border: 1px dashed color-mix(in srgb, var(--md-default-fg-color) 25%, transparent);
+  border-radius: var(--imm-panel-radius);
+}
+.imm-complete-box.is-done {
+  border-style: solid;
+  border-color: #2faa5e;
+  background: color-mix(in srgb, #2faa5e 12%, transparent);
+}
+.imm-complete-btn {
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--imm-accent);
+  transition: transform 0.12s ease, background 0.2s ease;
+}
+.imm-complete-btn:hover { transform: translateY(-1px); }
+.imm-complete-box.is-done .imm-complete-btn { background: #2faa5e; }
+
+/* --------------------------------------------------------------------------
+   4. Floating toolbar (bottom-right)
+   -------------------------------------------------------------------------- */
+.imm-toolbar {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1001;
+}
+.imm-fab {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 1.1rem;
+  color: #fff;
+  background: color-mix(in srgb, var(--imm-accent) 92%, black 8%);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.28);
+  transition: transform 0.12s ease, background 0.2s ease;
+}
+.imm-fab:hover { transform: scale(1.08); }
+.imm-fab.is-active {
+  background: #2faa5e;
+  box-shadow: 0 0 0 3px color-mix(in srgb, #2faa5e 40%, transparent);
+}
+.imm-fab--secondary {
+  width: 40px; height: 40px;
+  font-size: 1rem;
+  background: var(--md-default-bg-color);
+  color: var(--md-default-fg-color);
+  border: 1px solid color-mix(in srgb, var(--md-default-fg-color) 18%, transparent);
+}
+
+/* --------------------------------------------------------------------------
+   5. Annotation color palette (popover)
+   -------------------------------------------------------------------------- */
+.imm-palette {
+  position: fixed;
+  right: 70px;
+  bottom: 18px;
+  display: none;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: var(--md-default-bg-color);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  z-index: 1002;
+}
+.imm-palette.is-open { display: flex; }
+.imm-swatch {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.1s ease;
+}
+.imm-swatch:hover { transform: scale(1.15); }
+.imm-swatch.is-selected { border-color: var(--md-default-fg-color); }
+
+/* --------------------------------------------------------------------------
+   6. Highlights & underlines
+   -------------------------------------------------------------------------- */
+.imm-hl {
+  background: var(--ann-color, var(--imm-hl-yellow));
+  border-radius: 3px;
+  padding: 0 1px;
+  cursor: pointer;
+  scroll-margin-top: 4rem;
+}
+.imm-ul {
+  text-decoration: underline;
+  text-decoration-color: var(--ann-color, var(--imm-accent));
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  scroll-margin-top: 4rem;
+}
+.imm-ann-flash { animation: imm-flash 1.4s ease; }
+@keyframes imm-flash {
+  0%, 100% { box-shadow: none; }
+  30% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--imm-accent) 55%, transparent); }
+}
+
+/* --------------------------------------------------------------------------
+   7. Bookmarks / annotations side panel
+   -------------------------------------------------------------------------- */
+.imm-panel {
+  position: fixed;
+  top: 0; right: 0;
+  height: 100%;
+  width: min(380px, 92vw);
+  background: var(--md-default-bg-color);
+  box-shadow: -8px 0 30px rgba(0,0,0,0.25);
+  transform: translateX(105%);
+  transition: transform 0.28s cubic-bezier(.2,.8,.2,1);
+  z-index: 1003;
+  display: flex;
+  flex-direction: column;
+}
+.imm-panel.is-open { transform: translateX(0); }
+.imm-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--md-default-fg-color) 12%, transparent);
+}
+.imm-panel__title { font-weight: 800; font-size: 1rem; }
+.imm-panel__close {
+  border: none; background: none; cursor: pointer;
+  font-size: 1.3rem; color: var(--md-default-fg-color);
+}
+.imm-panel__tools {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  padding: 0.7rem 1.1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--md-default-fg-color) 12%, transparent);
+}
+.imm-btn {
+  appearance: none; cursor: pointer;
+  font-size: 0.72rem; font-weight: 600;
+  padding: 0.4rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--md-default-fg-color) 20%, transparent);
+  background: transparent;
+  color: var(--md-default-fg-color);
+}
+.imm-btn:hover { background: color-mix(in srgb, var(--md-default-fg-color) 8%, transparent); }
+.imm-btn--danger { color: #d8453a; border-color: color-mix(in srgb, #d8453a 45%, transparent); }
+
+.imm-panel__body { overflow-y: auto; padding: 0.6rem 0.8rem 2rem; }
+.imm-bm-group { margin-bottom: 1rem; }
+.imm-bm-group__title {
+  font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.04em; opacity: 0.65; margin: 0.6rem 0.3rem 0.3rem;
+}
+.imm-bm {
+  display: flex; align-items: flex-start; gap: 0.5rem;
+  padding: 0.5rem 0.55rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.imm-bm:hover { background: color-mix(in srgb, var(--md-default-fg-color) 7%, transparent); }
+.imm-bm__dot { width: 12px; height: 12px; border-radius: 3px; margin-top: 3px; flex: 0 0 auto; }
+.imm-bm__text { font-size: 0.8rem; line-height: 1.35; flex: 1; }
+.imm-bm__del {
+  border: none; background: none; cursor: pointer;
+  color: var(--md-default-fg-color); opacity: 0.4; font-size: 0.95rem;
+}
+.imm-bm__del:hover { opacity: 1; color: #d8453a; }
+.imm-empty { text-align: center; opacity: 0.55; font-size: 0.82rem; padding: 2rem 1rem; }
+
+/* --------------------------------------------------------------------------
+   8. Freehand drawing canvas overlay
+   -------------------------------------------------------------------------- */
+.imm-canvas-layer {
+  position: absolute;
+  left: 0; top: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+body.imm-draw-mode .imm-canvas-layer { pointer-events: auto; cursor: crosshair; }
+body.imm-draw-mode { user-select: none; }
+
+.imm-draw-bar {
+  position: fixed;
+  left: 50%; bottom: 18px;
+  transform: translateX(-50%);
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--md-default-bg-color);
+  box-shadow: 0 6px 22px rgba(0,0,0,0.3);
+  z-index: 1004;
+}
+.imm-draw-bar.is-open { display: flex; }
+.imm-draw-bar input[type="range"] { width: 90px; }
+.imm-draw-bar .imm-pen-color { width: 26px; height: 26px; border: none; background: none; cursor: pointer; }
+
+/* Toast */
+.imm-toast {
+  position: fixed;
+  left: 50%; bottom: 80px;
+  transform: translateX(-50%) translateY(20px);
+  background: #222; color: #fff;
+  padding: 0.5rem 1rem; border-radius: 8px;
+  font-size: 0.8rem; opacity: 0; pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 1010;
+}
+.imm-toast.is-show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media print {
+  .imm-toolbar, .imm-palette, .imm-panel, .imm-draw-bar, .imm-progress-bar, .imm-toast { display: none !important; }
+}
