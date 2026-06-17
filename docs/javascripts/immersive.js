@@ -383,18 +383,23 @@
       const bar = document.createElement("div");
       bar.className = "imm-toolbar";
       bar.innerHTML = `
-        <button class="imm-fab" data-act="panel" title="Bookmarks & annotations">🔖</button>
-        <button class="imm-fab imm-fab--secondary" data-act="palette" title="Highlight colour">🎨</button>
-        <button class="imm-fab imm-fab--secondary" data-act="draw" title="Draw (freehand)">✏️</button>
-        <button class="imm-fab imm-fab--secondary" data-act="data" title="Export / import / reset">⚙️</button>`;
+        <button class="imm-fab imm-fab--toggle" data-act="toggle" title="Hide tools">▾</button>
+        <div class="imm-toolbar__group">
+          <button class="imm-fab" data-act="panel" title="Bookmarks & annotations">🔖</button>
+          <button class="imm-fab imm-fab--secondary" data-act="palette" title="Highlight colour">🎨</button>
+          <button class="imm-fab imm-fab--secondary" data-act="draw" title="Draw (freehand)">✏️</button>
+          <button class="imm-fab imm-fab--secondary" data-act="data" title="Export / import / reset">⚙️</button>
+        </div>`;
       document.body.appendChild(bar);
       bar.addEventListener("click", e => {
         const act = e.target.closest("[data-act]")?.dataset.act;
-        if (act === "panel") this.togglePanel();
+        if (act === "toggle") this.toggleToolbar();
+        else if (act === "panel") this.togglePanel();
         else if (act === "palette") this.togglePalette();
         else if (act === "draw") this.toggleDraw();
         else if (act === "data") this.dataMenu();
       });
+      this.toggleToolbar(!!Store.data.toolbarCollapsed);
 
       // Colour palette
       const pal = document.createElement("div");
@@ -476,6 +481,73 @@
     syncEraser() {
       const btn = document.querySelector('.imm-draw-bar [data-d="eraser"]');
       if (btn) btn.classList.toggle("imm-btn--danger", Draw.eraser);
+    },
+
+    toggleToolbar(force) {
+      const bar = $(".imm-toolbar");
+      if (!bar) return;
+      const collapsed = force ?? !bar.classList.contains("is-collapsed");
+      bar.classList.toggle("is-collapsed", collapsed);
+      Store.data.toolbarCollapsed = collapsed;
+      Store.save();
+      const t = bar.querySelector(".imm-fab--toggle");
+      if (t) {
+        t.textContent = collapsed ? "▴" : "▾";
+        t.title = collapsed ? "Show tools" : "Hide tools";
+      }
+    },
+
+    // Inline "mark complete" toggles next to every chapter in the left nav.
+    mountNavCompletion() {
+      document.querySelectorAll(".md-nav--primary a.md-nav__link[href]").forEach(a => {
+        let key;
+        try {
+          const u = new URL(a.href);
+          if (u.origin !== location.origin || a.hash) return;
+          key = u.pathname;
+        } catch (e) { return; }
+        if (a.querySelector(".imm-nav-check")) return;
+        const title = a.textContent.trim();
+        const cb = document.createElement("span");
+        cb.className = "imm-nav-check";
+        cb.setAttribute("role", "checkbox");
+        cb.title = "Mark section complete";
+        a.appendChild(cb);
+        cb.addEventListener("click", e => {
+          e.preventDefault();
+          e.stopPropagation();
+          const pg = Store.page(key, title);
+          pg.completed = !pg.completed;
+          Store.save();
+          this.syncNavCompletion();
+          this.updateProgress();
+          if (key === pageKey()) this.syncCompleteBox(pg);
+          toast(pg.completed ? "Section complete! 🎉" : "Marked as not complete");
+        });
+      });
+      this.syncNavCompletion();
+    },
+
+    syncNavCompletion() {
+      document.querySelectorAll(".md-nav--primary a.md-nav__link[href] .imm-nav-check").forEach(cb => {
+        const a = cb.closest("a.md-nav__link");
+        let key;
+        try { key = new URL(a.href).pathname; } catch (e) { return; }
+        const done = !!(Store.data.pages[key] && Store.data.pages[key].completed);
+        cb.classList.toggle("is-done", done);
+        cb.setAttribute("aria-checked", done ? "true" : "false");
+        a.classList.toggle("imm-nav-done", done);
+      });
+    },
+
+    syncCompleteBox(page) {
+      const box = $(".imm-complete-box");
+      if (!box) return;
+      box.classList.toggle("is-done", page.completed);
+      box.querySelector("span").textContent = page.completed
+        ? "✅ You’ve completed this section."
+        : "Finished reading? Mark this section complete to track your progress.";
+      box.querySelector("button").textContent = page.completed ? "Completed ✓" : "Mark complete";
     },
 
     togglePalette(force) {
@@ -575,6 +647,7 @@
           : "Finished reading? Mark this section complete to track your progress.";
         box.querySelector("button").textContent = page.completed ? "Completed ✓" : "Mark complete";
         this.updateProgress();
+        this.syncNavCompletion();
         if (page.completed) toast("Section complete! 🎉");
       });
     },
@@ -605,6 +678,7 @@
   function initPage() {
     Draw.canvas = null; Draw.ctx = null; // article was swapped out
     UI.mountChrome();
+    UI.mountNavCompletion();
     UI.updateProgress();
 
     const root = contentRoot();
