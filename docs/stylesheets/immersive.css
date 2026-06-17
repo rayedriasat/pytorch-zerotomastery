@@ -19,15 +19,16 @@
    mkdocs-jupyter wraps content in .jupyter-wrapper with .jp-Cell blocks.
    -------------------------------------------------------------------------- */
 .jupyter-wrapper .jp-Cell {
-  border: 1px solid color-mix(in srgb, var(--md-default-fg-color) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--md-default-fg-color) 28%, transparent);
   border-radius: 10px;
   padding: 0.35rem 0.75rem;
   margin: 0.55rem 0;
+  box-shadow: 0 1px 6px color-mix(in srgb, var(--md-default-fg-color) 7%, transparent);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .jupyter-wrapper .jp-Cell:hover {
-  border-color: color-mix(in srgb, var(--imm-accent) 35%, transparent);
-  box-shadow: 0 1px 10px color-mix(in srgb, var(--md-default-fg-color) 8%, transparent);
+  border-color: color-mix(in srgb, var(--imm-accent) 55%, transparent);
+  box-shadow: 0 1px 12px color-mix(in srgb, var(--md-default-fg-color) 12%, transparent);
 }
 .jupyter-wrapper .jp-CodeCell {
   background: color-mix(in srgb, var(--md-default-fg-color) 3%, transparent);

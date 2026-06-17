@@ -4,7 +4,7 @@
 
 This section answers the question, "how do I turn my notebook code into Python scripts?"
 
-To do so, we're going to turn the most useful code cells in [notebook 04. PyTorch Custom Datasets](https://www.learnpytorch.io/04_pytorch_custom_datasets/) into a series of Python scripts saved to a directory called [`going_modular`](https://github.com/mrdbourke/pytorch-deep-learning/tree/main/going_modular).
+To do so, we're going to turn the most useful code cells in [notebook 04. PyTorch Custom Datasets](https://rayedriasat.github.io/pytorch-zerotomastery/04_pytorch_custom_datasets/) into a series of Python scripts saved to a directory called [`going_modular`](https://github.com/mrdbourke/pytorch-deep-learning/tree/main/going_modular).
 
 ## What is going modular?
 
@@ -105,7 +105,7 @@ Doing this will save us writing the same code over and over again.
 
 There are two notebooks for this section:
 
-1. [**05. Going Modular: Part 1 (cell mode)**](https://github.com/mrdbourke/pytorch-deep-learning/blob/main/going_modular/05_pytorch_going_modular_cell_mode.ipynb) - this notebook is run as a traditional Jupyter Notebook/Google Colab notebook and is a condensed version of [notebook 04](https://www.learnpytorch.io/04_pytorch_custom_datasets/).
+1. [**05. Going Modular: Part 1 (cell mode)**](https://github.com/mrdbourke/pytorch-deep-learning/blob/main/going_modular/05_pytorch_going_modular_cell_mode.ipynb) - this notebook is run as a traditional Jupyter Notebook/Google Colab notebook and is a condensed version of [notebook 04](https://rayedriasat.github.io/pytorch-zerotomastery/04_pytorch_custom_datasets/).
 2. [**05. Going Modular: Part 2 (script mode)**](https://github.com/mrdbourke/pytorch-deep-learning/blob/main/going_modular/05_pytorch_going_modular_script_mode.ipynb) - this notebook is the same as number 1 but with added functionality to turn each of the major sections into Python scripts, such as, `data_setup.py` and `train.py`. 
 
 The text in this document focuses on the code cells 05. Going Modular: Part 2 (script mode), the ones with `%%writefile ...` at the top.
@@ -184,7 +184,7 @@ A script mode notebook such as [05. Going Modular Part 2 (script mode)](https://
 
 ## 1. Get data
 
-Getting the data in each of the 05 notebooks happens the same as in [notebook 04](https://www.learnpytorch.io/04_pytorch_custom_datasets/#1-get-data).
+Getting the data in each of the 05 notebooks happens the same as in [notebook 04](https://rayedriasat.github.io/pytorch-zerotomastery/04_pytorch_custom_datasets/#1-get-data).
 
 A call is made to GitHub via Python's `requests` module to download a `.zip` file and unzip it.
 
@@ -414,7 +414,7 @@ model = model_builder.TinyVGG(input_shape=3,
 
 ## 4. Creating `train_step()` and `test_step()` functions and `train()` to combine them  
 
-We wrote several training functions in [notebook 04](https://www.learnpytorch.io/04_pytorch_custom_datasets/#75-create-train-test-loop-functions):
+We wrote several training functions in [notebook 04](https://rayedriasat.github.io/pytorch-zerotomastery/04_pytorch_custom_datasets/#75-create-train-test-loop-functions):
 
 1. `train_step()` - takes in a model, a `DataLoader`, a loss function and an optimizer and trains the model on the `DataLoader`.
 2. `test_step()` - takes in a model, a `DataLoader` and a loss function and evaluates the model on the `DataLoader`.
@@ -826,7 +826,7 @@ python train.py --model MODEL_NAME --batch_size BATCH_SIZE --lr LEARNING_RATE --
     * **Note:** Since `train.py` leverages the other scripts we created in section 05, such as, `model_builder.py`, `utils.py` and `engine.py`, you'll have to make sure they're available to use too. You can find these in the [`going_modular` folder on the course GitHub](https://github.com/mrdbourke/pytorch-deep-learning/tree/main/going_modular/going_modular). 
 3. Create a script to predict (such as `predict.py`) on a target image given a file path with a saved model.
     * For example, you should be able to run the command `python predict.py some_image.jpeg` and have a trained PyTorch model predict on the image and return its prediction.
-    * To see example prediction code, check out the [predicting on a custom image section in notebook 04](https://www.learnpytorch.io/04_pytorch_custom_datasets/#113-putting-custom-image-prediction-together-building-a-function). 
+    * To see example prediction code, check out the [predicting on a custom image section in notebook 04](https://rayedriasat.github.io/pytorch-zerotomastery/04_pytorch_custom_datasets/#113-putting-custom-image-prediction-together-building-a-function). 
     * You may also have to write code to load in a trained model.
 
 ## Extra-curriculum

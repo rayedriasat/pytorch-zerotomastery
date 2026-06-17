@@ -41,7 +41,7 @@ The course focuses on pure PyTorch (using minimal external libraries) because if
 
 - [**Machine Learning with PyTorch and Scikit-Learn: Develop machine learning and deep learning models with Python by Sebastian Raschka**](https://www.amazon.com/Machine-Learning-PyTorch-Scikit-Learn-scikit-learn-ebook-dp-B09NW48MR1/dp/B09NW48MR1/) — A fantastic introduction to machine learning and deep learning. Starting with traditional machine learning algorithms using Scikit-Learn for problems with structured data (tabular or rows and columns or Excel-style) and then switching to how to use PyTorch for deep learning on unstructured data (such as computer vision and natural language processing).
 - [**PyTorch Step-by-Step series by Daniel Voigt Godoy**](https://pytorchstepbystep.com) — Where the Zero to Mastery PyTorch course works from a code-first perspective, the Step-by-Step series covers PyTorch and deep learning from a concept-first perspective with code examples to go along. With three editions, Fundamentals, Computer Vision and Sequences (NLP), the step-by-step series is one of my favourite resources for learning PyTorch from the ground up.
-- [**Dive into Deep Learning book**](https://d2l.ai) — Possibly one of the most comprehensive resources on the internet for deep learning concepts along with code examples in PyTorch, TensorFlow and Gluon. And all for free! For example, take a look at the author’s explanation of the [Vision Transformer](https://d2l.ai/chapter_attention-mechanisms-and-transformers/vision-transformer.html) we cover in [08. PyTorch Paper Replicating](https://www.learnpytorch.io/08_pytorch_paper_replicating/).
+- [**Dive into Deep Learning book**](https://d2l.ai) — Possibly one of the most comprehensive resources on the internet for deep learning concepts along with code examples in PyTorch, TensorFlow and Gluon. And all for free! For example, take a look at the author’s explanation of the [Vision Transformer](https://d2l.ai/chapter_attention-mechanisms-and-transformers/vision-transformer.html) we cover in [08. PyTorch Paper Replicating](https://rayedriasat.github.io/pytorch-zerotomastery/08_pytorch_paper_replicating/).
 - **Bonus:** The [fast.ai course](https://course.fast.ai) (available free online) also comes as a freely available online book, [Deep Learning for Coders with fastai & PyTorch](https://course.fast.ai/Resources/book.html).
 
 ![Textbooks to learn more about PyTorch as well as deep learning in general.](https://raw.githubusercontent.com/mrdbourke/pytorch-deep-learning/main/images/extras-002-books-for-pytorch.jpeg)
@@ -88,7 +88,7 @@ The following resources are focused on libraries and pretrained models for speci
 
 ### 😎 Computer Vision
 
-We cover computer vision in [03. PyTorch Computer Vision](https://www.learnpytorch.io/03_pytorch_computer_vision/) but as a quick recap, computer vision is the art of getting computers to see. 
+We cover computer vision in [03. PyTorch Computer Vision](https://rayedriasat.github.io/pytorch-zerotomastery/03_pytorch_computer_vision/) but as a quick recap, computer vision is the art of getting computers to see. 
 
 If your data is visual, images, x-rays, production line video or even hand-written documents, it may be a computer vision problem.
 
