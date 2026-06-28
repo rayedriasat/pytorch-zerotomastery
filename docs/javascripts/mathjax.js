@@ -14,9 +14,18 @@ window.MathJax = {
 };
 
 // Re-typeset on Material's instant navigation.
-document$.subscribe(() => {
-  MathJax.startup.output.clearCache();
-  MathJax.typesetClear();
-  MathJax.texReset();
-  MathJax.typesetPromise();
-});
+function ztmTypesetMath() {
+  if (!window.MathJax || !MathJax.startup || !MathJax.typesetPromise) return;
+  MathJax.startup.promise.then(() => {
+    if (MathJax.startup.output) MathJax.startup.output.clearCache();
+    if (MathJax.typesetClear) MathJax.typesetClear();
+    if (MathJax.texReset) MathJax.texReset();
+    return MathJax.typesetPromise();
+  }).catch(error => console.warn("[mathjax] typeset failed", error));
+}
+
+if (window.document$ && typeof document$.subscribe === "function") {
+  document$.subscribe(() => setTimeout(ztmTypesetMath, 0));
+} else {
+  document.addEventListener("DOMContentLoaded", ztmTypesetMath);
+}

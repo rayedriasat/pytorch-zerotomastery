@@ -20,9 +20,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      # Social cards need the native libcairo library; skip them in CI to keep
-      # the build dependency-free. They only affect link-preview images.
-      MKDOCS_SOCIAL_CARDS: "false"
+      # Material for MkDocs emits an upstream MkDocs 2.0 advisory on every
+      # build unless this supported opt-out is set.
+      NO_MKDOCS_2_WARNING: "true"
     steps:
       - uses: actions/checkout@v4
       - name: Install uv

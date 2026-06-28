@@ -2,8 +2,9 @@ site_name: Zero to Mastery Learn PyTorch for Deep Learning
 site_url: https://rayedriasat.github.io/pytorch-zerotomastery/
 site_description: Learn important machine learning concepts hands-on by writing PyTorch code — with an immersive, gamified reading experience and progress tracking.
 
-repo_url: https://github.com/rayedriasat/pytorch-zerotomastery/
-repo_name: rayedriasat/pytorch-zerotomastery
+# Keep repository links in the page content/social links rather than Material's
+# source widget. The widget polls GitHub's releases/latest API, which returns
+# 404 for repos without releases and creates noisy console/network errors.
 
 theme:
   name: material
@@ -50,12 +51,8 @@ hooks:
 plugins:
  - mkdocs-jupyter:
     include_source: True
+    cache: false
  - search
- - social:
-    # Social cards need the native libcairo library (absent on Windows).
-    # They only affect link-preview images, not the page itself. Disable
-    # locally via `MKDOCS_SOCIAL_CARDS=false`; CI (Linux) keeps them on.
-    cards: !ENV [MKDOCS_SOCIAL_CARDS, true]
 
 edit_uri: ""
 

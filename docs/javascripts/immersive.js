@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Immersive — progress tracking, annotations (highlight / underline / draw),
+   Immersive — progress tracking, annotations (highlight / underline / squiggle),
    gamification and bookmarks for the Zero to Mastery PyTorch course.
 
    Everything is client-side and persisted to localStorage. Data can be
@@ -32,9 +32,8 @@
            title: "...",
            completed: bool,
            annotations: [
-             { id, type:"highlight"|"underline", color, start, end, text, ts }
+             { id, type:"highlight"|"underline"|"squiggle", color, start, end, text, ts }
            ],
-           drawing: [ { color, width, eraser, points:[[x,y],...] } ]
          }
        }
      }
@@ -56,12 +55,11 @@
     },
     page(key, title) {
       if (!this.data.pages[key]) {
-        this.data.pages[key] = { title: title || key, completed: false, annotations: [], drawing: [] };
+        this.data.pages[key] = { title: title || key, completed: false, annotations: [] };
       }
       if (title) this.data.pages[key].title = title;
       const p = this.data.pages[key];
       if (!p.annotations) p.annotations = [];
-      if (!p.drawing) p.drawing = [];
       return p;
     },
     export() {
@@ -89,7 +87,6 @@
             cur.completed = cur.completed || !!pg.completed;
             const seen = new Set(cur.annotations.map(a => a.id));
             (pg.annotations || []).forEach(a => { if (!seen.has(a.id)) cur.annotations.push(a); });
-            if ((pg.drawing || []).length) cur.drawing = cur.drawing.concat(pg.drawing);
           }
           if (incoming.defaultColor) this.data.defaultColor = incoming.defaultColor;
           this.save();
@@ -143,7 +140,7 @@
      Annotation engine: apply / remove highlights & underlines by offset
   ---------------------------------------------------------------------- */
   function applyAnnotation(root, ann) {
-    const cls = ann.type === "underline" ? "imm-ul" : "imm-hl";
+    const cls = ann.type === "underline" ? "imm-ul" : ann.type === "squiggle" ? "imm-sq" : "imm-hl";
     const segs = [];
     let pos = 0;
     for (const node of textNodes(root)) {
@@ -215,8 +212,10 @@
     Store.save();
     applyAnnotation(root, ann);
     sel.removeAllRanges();
-    toast(type === "underline" ? "Underlined · saved to bookmarks" : "Highlighted · saved to bookmarks");
+    const label = type === "underline" ? "Underlined" : type === "squiggle" ? "Squiggle saved" : "Highlighted";
+    toast(label + " · saved to bookmarks");
     UI.refreshPanel();
+    UI.hideSelectionMenu();
   }
 
   function deleteAnnotation(id) {
@@ -228,106 +227,7 @@
   }
 
   /* ----------------------------------------------------------------------
-     Drawing engine: freehand strokes on a canvas overlaying the article
-  ---------------------------------------------------------------------- */
-  const Draw = {
-    canvas: null, ctx: null, root: null,
-    active: false, drawing: false,
-    color: "#ee4c2c", width: 3, eraser: false,
-    current: null,
-
-    mount(root, page) {
-      this.root = root;
-      const layer = document.createElement("canvas");
-      layer.className = "imm-canvas-layer";
-      root.style.position = root.style.position || "relative";
-      root.appendChild(layer);
-      this.canvas = layer;
-      this.ctx = layer.getContext("2d");
-      this.resize();
-      this.redraw(page);
-
-      layer.addEventListener("pointerdown", e => this.start(e));
-      layer.addEventListener("pointermove", e => this.move(e));
-      window.addEventListener("pointerup", () => this.end());
-      window.addEventListener("resize", () => { this.resize(); this.redraw(Store.page(pageKey())); });
-    },
-    resize() {
-      if (!this.canvas || !this.root) return;
-      const w = this.root.scrollWidth, h = this.root.scrollHeight;
-      this.canvas.width = w; this.canvas.height = h;
-      this.canvas.style.width = w + "px"; this.canvas.style.height = h + "px";
-    },
-    pos(e) {
-      const rect = this.canvas.getBoundingClientRect();
-      return [e.clientX - rect.left, e.clientY - rect.top];
-    },
-    start(e) {
-      if (!this.active) return;
-      this.drawing = true;
-      this.current = { color: this.color, width: this.eraser ? this.width * 6 : this.width, eraser: this.eraser, points: [this.pos(e)] };
-    },
-    move(e) {
-      if (!this.active || !this.drawing) return;
-      this.current.points.push(this.pos(e));
-      this.strokeLive();
-    },
-    end() {
-      if (!this.drawing) return;
-      this.drawing = false;
-      if (this.current && this.current.points.length > 1) {
-        const page = Store.page(pageKey(), document.title);
-        page.drawing.push(this.current);
-        Store.save();
-      }
-      this.current = null;
-    },
-    strokeLive() {
-      const s = this.current;
-      const ctx = this.ctx;
-      ctx.save();
-      ctx.lineJoin = ctx.lineCap = "round";
-      ctx.globalCompositeOperation = s.eraser ? "destination-out" : "source-over";
-      ctx.strokeStyle = s.color;
-      ctx.lineWidth = s.width;
-      const p = s.points;
-      ctx.beginPath();
-      ctx.moveTo(p[p.length - 2][0], p[p.length - 2][1]);
-      ctx.lineTo(p[p.length - 1][0], p[p.length - 1][1]);
-      ctx.stroke();
-      ctx.restore();
-    },
-    redraw(page) {
-      if (!this.ctx) return;
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      (page.drawing || []).forEach(s => {
-        const ctx = this.ctx;
-        ctx.save();
-        ctx.lineJoin = ctx.lineCap = "round";
-        ctx.globalCompositeOperation = s.eraser ? "destination-out" : "source-over";
-        ctx.strokeStyle = s.color;
-        ctx.lineWidth = s.width;
-        ctx.beginPath();
-        s.points.forEach((pt, i) => i ? ctx.lineTo(pt[0], pt[1]) : ctx.moveTo(pt[0], pt[1]));
-        ctx.stroke();
-        ctx.restore();
-      });
-    },
-    clear() {
-      const page = Store.page(pageKey(), document.title);
-      page.drawing = [];
-      Store.save();
-      this.redraw(page);
-      toast("Drawing cleared");
-    },
-    toggle(on) {
-      this.active = on;
-      document.body.classList.toggle("imm-draw-mode", on);
-    },
-  };
-
-  /* ----------------------------------------------------------------------
-     UI: progress, toolbar, palette, panel, complete toggle
+     UI: progress, top-bar controls, palette, panel, complete toggle
   ---------------------------------------------------------------------- */
   const UI = {
     coursePages() {
@@ -377,29 +277,22 @@
         header.insertBefore(pill, opt || null);
       }
 
-      if ($(".imm-toolbar")) return; // chrome persists across instant nav
+      if (header && !$(".imm-header-tools")) {
+        const tools = document.createElement("div");
+        tools.className = "imm-header-tools";
+        tools.innerHTML = `
+          <button class="imm-header-btn" data-act="palette" title="Annotation colour" aria-label="Annotation colour">🎨</button>
+          <button class="imm-header-btn" data-act="panel" title="Bookmarks & annotations" aria-label="Bookmarks and annotations">🔖</button>`;
+        const opt = header.querySelector(".md-header__option");
+        header.insertBefore(tools, opt || null);
+        tools.addEventListener("click", e => {
+          const act = e.target.closest("[data-act]")?.dataset.act;
+          if (act === "palette") this.togglePalette();
+          else if (act === "panel") this.togglePanel();
+        });
+      }
 
-      // Floating toolbar
-      const bar = document.createElement("div");
-      bar.className = "imm-toolbar";
-      bar.innerHTML = `
-        <button class="imm-fab imm-fab--toggle" data-act="toggle" title="Hide tools">▾</button>
-        <div class="imm-toolbar__group">
-          <button class="imm-fab" data-act="panel" title="Bookmarks & annotations">🔖</button>
-          <button class="imm-fab imm-fab--secondary" data-act="palette" title="Highlight colour">🎨</button>
-          <button class="imm-fab imm-fab--secondary" data-act="draw" title="Draw (freehand)">✏️</button>
-          <button class="imm-fab imm-fab--secondary" data-act="data" title="Export / import / reset">⚙️</button>
-        </div>`;
-      document.body.appendChild(bar);
-      bar.addEventListener("click", e => {
-        const act = e.target.closest("[data-act]")?.dataset.act;
-        if (act === "toggle") this.toggleToolbar();
-        else if (act === "panel") this.togglePanel();
-        else if (act === "palette") this.togglePalette();
-        else if (act === "draw") this.toggleDraw();
-        else if (act === "data") this.dataMenu();
-      });
-      this.toggleToolbar(!!Store.data.toolbarCollapsed);
+      if ($(".imm-palette")) return; // popovers persist across instant nav
 
       // Colour palette
       const pal = document.createElement("div");
@@ -413,25 +306,6 @@
         Store.data.defaultColor = c; Store.save();
         this.syncSwatches();
         toast(`Default colour: ${c}`);
-      });
-
-      // Drawing toolbar
-      const db = document.createElement("div");
-      db.className = "imm-draw-bar";
-      db.innerHTML = `
-        <input type="color" class="imm-pen-color" value="#ee4c2c" title="Pen colour">
-        <input type="range" min="1" max="12" value="3" title="Pen size">
-        <button class="imm-btn" data-d="eraser">Eraser</button>
-        <button class="imm-btn" data-d="clear">Clear</button>
-        <button class="imm-btn" data-d="done">Done</button>`;
-      document.body.appendChild(db);
-      db.querySelector(".imm-pen-color").addEventListener("input", e => { Draw.color = e.target.value; Draw.eraser = false; this.syncEraser(); });
-      db.querySelector('input[type="range"]').addEventListener("input", e => { Draw.width = +e.target.value; });
-      db.addEventListener("click", e => {
-        const d = e.target.closest("[data-d]")?.dataset.d;
-        if (d === "eraser") { Draw.eraser = !Draw.eraser; this.syncEraser(); }
-        else if (d === "clear") Draw.clear();
-        else if (d === "done") this.toggleDraw(false);
       });
 
       // Side panel
@@ -457,7 +331,7 @@
         if (p === "export") Store.export();
         else if (p === "import") fileInput.click();
         else if (p === "reset") {
-          if (confirm("Erase ALL progress, highlights and drawings? This cannot be undone.")) {
+          if (confirm("Erase ALL progress and annotations? This cannot be undone.")) {
             Store.reset(); location.reload();
           }
         }
@@ -477,24 +351,6 @@
     syncSwatches() {
       document.querySelectorAll(".imm-swatch").forEach(s =>
         s.classList.toggle("is-selected", s.dataset.color === Store.data.defaultColor));
-    },
-    syncEraser() {
-      const btn = document.querySelector('.imm-draw-bar [data-d="eraser"]');
-      if (btn) btn.classList.toggle("imm-btn--danger", Draw.eraser);
-    },
-
-    toggleToolbar(force) {
-      const bar = $(".imm-toolbar");
-      if (!bar) return;
-      const collapsed = force ?? !bar.classList.contains("is-collapsed");
-      bar.classList.toggle("is-collapsed", collapsed);
-      Store.data.toolbarCollapsed = collapsed;
-      Store.save();
-      const t = bar.querySelector(".imm-fab--toggle");
-      if (t) {
-        t.textContent = collapsed ? "▴" : "▾";
-        t.title = collapsed ? "Show tools" : "Hide tools";
-      }
     },
 
     // Inline "mark complete" toggles next to every chapter in the left nav.
@@ -561,15 +417,51 @@
       panel.classList.toggle("is-open", open);
       if (open) this.refreshPanel();
     },
-    toggleDraw(force) {
-      const on = force ?? !Draw.active;
-      Draw.toggle(on);
-      $(".imm-draw-bar")?.classList.toggle("is-open", on);
-      document.querySelector('.imm-toolbar [data-act="draw"]')?.classList.toggle("is-active", on);
-      if (on) toast("Draw mode on — sketch over the page");
-    },
 
     dataMenu() { this.togglePanel(true); },
+
+    ensureSelectionMenu() {
+      let menu = $(".imm-selection-menu");
+      if (menu) return menu;
+      menu = document.createElement("div");
+      menu.className = "imm-selection-menu";
+      menu.innerHTML = `
+        <button type="button" data-ann="highlight">Highlight</button>
+        <button type="button" data-ann="squiggle">Squiggle</button>
+        <button type="button" data-ann="underline">Underline</button>`;
+      document.body.appendChild(menu);
+      menu.addEventListener("pointerdown", e => e.preventDefault());
+      menu.addEventListener("click", e => {
+        const type = e.target.closest("[data-ann]")?.dataset.ann;
+        if (type) createAnnotation(type);
+      });
+      return menu;
+    },
+
+    showSelectionMenu() {
+      const sel = window.getSelection();
+      const root = contentRoot();
+      const menu = this.ensureSelectionMenu();
+      if (!sel || sel.isCollapsed || !sel.toString().trim() || sel.rangeCount === 0 || !root) {
+        this.hideSelectionMenu();
+        return;
+      }
+      const range = sel.getRangeAt(0);
+      if (!root.contains(range.commonAncestorContainer)) {
+        this.hideSelectionMenu();
+        return;
+      }
+      const rect = range.getBoundingClientRect();
+      menu.classList.add("is-open");
+      const top = Math.max(56, rect.top + window.scrollY - (menu.offsetHeight || 38) - 10);
+      const center = rect.left + rect.width / 2 + window.scrollX;
+      menu.style.top = `${top}px`;
+      menu.style.left = `${center}px`;
+    },
+
+    hideSelectionMenu() {
+      $(".imm-selection-menu")?.classList.remove("is-open");
+    },
 
     // Bookmarks panel content — grouped by page, current page first.
     refreshPanel() {
@@ -578,7 +470,7 @@
       const pages = Store.data.pages;
       const entries = Object.entries(pages).filter(([, p]) => (p.annotations || []).length);
       if (!entries.length) {
-        body.innerHTML = `<div class="imm-empty">No bookmarks yet.<br>Select text and press <b>A</b> to highlight or <b>U</b> to underline — each one is saved here.</div>`;
+        body.innerHTML = `<div class="imm-empty">No bookmarks yet.<br>Select text, then choose highlight, squiggle or underline.</div>`;
         return;
       }
       const here = pageKey();
@@ -587,6 +479,8 @@
         const items = p.annotations.map(a => {
           const dot = a.type === "underline"
             ? `border-bottom:3px solid ${COLORS[a.color] || "#ee4c2c"};border-radius:0;height:8px`
+            : a.type === "squiggle"
+            ? `border-bottom:3px wavy ${COLORS[a.color] || "#ee4c2c"};border-radius:0;height:8px`
             : `background:${COLORS[a.color] || COLORS.yellow}`;
           return `<div class="imm-bm" data-key="${key}" data-id="${a.id}">
               <span class="imm-bm__dot" style="${dot}"></span>
@@ -658,7 +552,7 @@
   }
 
   /* ----------------------------------------------------------------------
-     Global keyboard: A = highlight, U = underline (when text selected)
+     Text selection popover and keyboard shortcuts
   ---------------------------------------------------------------------- */
   function onKey(e) {
     const tag = (e.target.tagName || "").toLowerCase();
@@ -669,14 +563,19 @@
     const k = e.key.toLowerCase();
     if (k === "a" && hasSel) { e.preventDefault(); createAnnotation("highlight"); }
     else if (k === "u" && hasSel) { e.preventDefault(); createAnnotation("underline"); }
-    else if (k === "escape" && Draw.active) UI.toggleDraw(false);
+    else if (k === "s" && hasSel) { e.preventDefault(); createAnnotation("squiggle"); }
+    else if (k === "escape") UI.hideSelectionMenu();
+  }
+
+  function onSelectionChanged() {
+    clearTimeout(onSelectionChanged.timer);
+    onSelectionChanged.timer = setTimeout(() => UI.showSelectionMenu(), 120);
   }
 
   /* ----------------------------------------------------------------------
      Per-page init (runs on every instant-navigation swap)
   ---------------------------------------------------------------------- */
   function initPage() {
-    Draw.canvas = null; Draw.ctx = null; // article was swapped out
     UI.mountChrome();
     UI.mountNavCompletion();
     UI.updateProgress();
@@ -687,9 +586,11 @@
 
     // Re-apply annotations after MathJax has had a chance to typeset, so the
     // text offsets match what was captured.
+    let applied = false;
     const apply = () => {
+      if (applied) return;
+      applied = true;
       restoreAnnotations(root, page);
-      Draw.mount(root, page);
       UI.mountCompleteBox(root, page);
       // Deep-link to a specific annotation (#imm-<id>)
       if (location.hash.startsWith("#imm-")) {
@@ -699,7 +600,7 @@
     };
     if (window.MathJax && MathJax.startup && MathJax.startup.promise) {
       MathJax.startup.promise.then(apply).catch(apply);
-      setTimeout(() => { if (!$(".imm-canvas-layer")) apply(); }, 1200); // fallback
+      setTimeout(apply, 1200); // fallback
     } else {
       setTimeout(apply, 200);
     }
@@ -710,6 +611,12 @@
   ---------------------------------------------------------------------- */
   Store.load();
   document.addEventListener("keydown", onKey, true);
+  document.addEventListener("selectionchange", onSelectionChanged);
+  document.addEventListener("pointerdown", e => {
+    if (!e.target.closest(".imm-selection-menu") && !e.target.closest(".imm-palette")) {
+      UI.hideSelectionMenu();
+    }
+  });
 
   if (window.document$ && typeof document$.subscribe === "function") {
     document$.subscribe(() => initPage());   // Material instant navigation

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Immersive reading experience — progress tracking, annotations, drawing.
+   Immersive reading experience — progress tracking and annotations.
    Layers on top of Material for MkDocs using its CSS custom properties so it
    adapts to both light and dark palettes automatically.
    ========================================================================== */
@@ -32,6 +32,20 @@
 }
 .jupyter-wrapper .jp-CodeCell {
   background: color-mix(in srgb, var(--md-default-fg-color) 3%, transparent);
+}
+
+.ztm-iframe-fallback {
+  margin: 1rem 0;
+}
+.ztm-iframe-fallback a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.42rem 0.72rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--imm-accent) 55%, transparent);
+  color: var(--imm-accent);
+  font-weight: 700;
 }
 
 /* --------------------------------------------------------------------------
@@ -135,60 +149,30 @@
 }
 
 /* --------------------------------------------------------------------------
-   4. Floating toolbar (bottom-right)
+   4. Header annotation controls
    -------------------------------------------------------------------------- */
-.imm-toolbar {
-  position: fixed;
-  right: 18px;
-  bottom: 18px;
+.imm-header-tools {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  z-index: 1001;
+  gap: 0.15rem;
+  margin-left: auto;
+  margin-right: 0.2rem;
 }
-.imm-toolbar__group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  transition: opacity 0.18s ease, transform 0.18s ease;
-}
-.imm-toolbar.is-collapsed .imm-toolbar__group {
-  display: none;
-}
-.imm-fab--toggle {
-  width: 32px; height: 32px;
-  font-size: 0.9rem;
-  background: var(--md-default-bg-color);
-  color: var(--md-default-fg-color);
-  border: 1px solid color-mix(in srgb, var(--md-default-fg-color) 18%, transparent);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-.imm-fab {
-  width: 44px; height: 44px;
+.imm-header-btn {
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
   border: none;
   cursor: pointer;
   display: grid;
   place-items: center;
-  font-size: 1.1rem;
-  color: #fff;
-  background: color-mix(in srgb, var(--imm-accent) 92%, black 8%);
-  box-shadow: 0 4px 14px rgba(0,0,0,0.28);
-  transition: transform 0.12s ease, background 0.2s ease;
-}
-.imm-fab:hover { transform: scale(1.08); }
-.imm-fab.is-active {
-  background: #2faa5e;
-  box-shadow: 0 0 0 3px color-mix(in srgb, #2faa5e 40%, transparent);
-}
-.imm-fab--secondary {
-  width: 40px; height: 40px;
   font-size: 1rem;
-  background: var(--md-default-bg-color);
-  color: var(--md-default-fg-color);
-  border: 1px solid color-mix(in srgb, var(--md-default-fg-color) 18%, transparent);
+  color: #fff;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+.imm-header-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 /* --------------------------------------------------------------------------
@@ -196,8 +180,8 @@
    -------------------------------------------------------------------------- */
 .imm-palette {
   position: fixed;
-  right: 70px;
-  bottom: 18px;
+  right: 3.25rem;
+  top: 3.2rem;
   display: none;
   gap: 8px;
   padding: 8px 10px;
@@ -231,6 +215,15 @@
   text-decoration: underline;
   text-decoration-color: var(--ann-color, var(--imm-accent));
   text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  scroll-margin-top: 4rem;
+}
+.imm-sq {
+  text-decoration-line: underline;
+  text-decoration-style: wavy;
+  text-decoration-color: var(--ann-color, var(--imm-accent));
+  text-decoration-thickness: 1.5px;
   text-underline-offset: 3px;
   cursor: pointer;
   scroll-margin-top: 4rem;
@@ -311,33 +304,39 @@
 .imm-empty { text-align: center; opacity: 0.55; font-size: 0.82rem; padding: 2rem 1rem; }
 
 /* --------------------------------------------------------------------------
-   8. Freehand drawing canvas overlay
+   8. Text selection annotation menu
    -------------------------------------------------------------------------- */
-.imm-canvas-layer {
+.imm-selection-menu {
   position: absolute;
-  left: 0; top: 0;
-  z-index: 5;
-  pointer-events: none;
-}
-body.imm-draw-mode .imm-canvas-layer { pointer-events: auto; cursor: crosshair; }
-body.imm-draw-mode { user-select: none; }
-
-.imm-draw-bar {
-  position: fixed;
-  left: 50%; bottom: 18px;
-  transform: translateX(-50%);
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%) translateY(0.25rem);
   display: none;
   align-items: center;
-  gap: 10px;
-  padding: 8px 14px;
+  gap: 0.25rem;
+  padding: 0.28rem;
   border-radius: 999px;
   background: var(--md-default-bg-color);
-  box-shadow: 0 6px 22px rgba(0,0,0,0.3);
+  border: 1px solid color-mix(in srgb, var(--md-default-fg-color) 15%, transparent);
+  box-shadow: 0 6px 22px rgba(0,0,0,0.28);
   z-index: 1004;
+  white-space: nowrap;
 }
-.imm-draw-bar.is-open { display: flex; }
-.imm-draw-bar input[type="range"] { width: 90px; }
-.imm-draw-bar .imm-pen-color { width: 26px; height: 26px; border: none; background: none; cursor: pointer; }
+.imm-selection-menu.is-open { display: flex; }
+.imm-selection-menu button {
+  appearance: none;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.38rem 0.58rem;
+  color: var(--md-default-fg-color);
+  background: transparent;
+}
+.imm-selection-menu button:hover {
+  background: color-mix(in srgb, var(--md-default-fg-color) 8%, transparent);
+}
 
 /* Toast */
 .imm-toast {
@@ -352,6 +351,30 @@ body.imm-draw-mode { user-select: none; }
 }
 .imm-toast.is-show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+@media screen and (max-width: 44rem) {
+  .imm-progress-pill {
+    margin: 0 0.25rem;
+    padding: 0.16rem 0.45rem;
+    font-size: 0.66rem;
+  }
+  .imm-header-tools {
+    gap: 0;
+    margin-right: 0;
+  }
+  .imm-header-btn {
+    width: 1.85rem;
+    height: 1.85rem;
+  }
+  .imm-palette {
+    top: 3rem;
+    right: 0.55rem;
+  }
+  .imm-selection-menu {
+    max-width: calc(100vw - 1rem);
+    overflow-x: auto;
+  }
+}
+
 @media print {
-  .imm-toolbar, .imm-palette, .imm-panel, .imm-draw-bar, .imm-progress-bar, .imm-toast { display: none !important; }
+  .imm-header-tools, .imm-palette, .imm-panel, .imm-selection-menu, .imm-progress-bar, .imm-toast { display: none !important; }
 }
